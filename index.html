@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eee4d5">
+  <title>kumpul. — Dashboard Mahasiswa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard" aria-label="kumpul dashboard">
+        <span class="brand-mark"><i data-lucide="graduation-cap"></i></span>
+        <span class="brand-name">kumpul<span>.</span></span>
+      </a>
+
+      <div class="side-label">RUANG MAHASISWA</div>
+      <nav class="side-nav" aria-label="Navigasi utama">
+        <button class="nav-item active" data-view="dashboard"><i data-lucide="layout-grid"></i><span>Dashboard</span></button>
+        <button class="nav-item" data-view="tasks"><i data-lucide="file-text"></i><span>Tugas saya</span><b class="nav-count" id="navPending">00</b></button>
+        <button class="nav-item" data-view="courses"><i data-lucide="book-open"></i><span>Mata kuliah</span></button>
+        <button class="nav-item" data-view="calendar"><i data-lucide="calendar-days"></i><span>Kalender</span></button>
+        <button class="nav-item" data-view="history"><i data-lucide="circle-check"></i><span>Riwayat</span></button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="help-card">
+        <i data-lucide="circle-help"></i>
+        <strong>Butuh bantuan?</strong>
+        <p>Kami siap membantumu.</p>
+        <a href="mailto:admin@example.com">Pusat bantuan <i data-lucide="arrow-right"></i></a>
+      </div>
+      <button class="nav-item exit-item" id="refreshButton"><i data-lucide="refresh-cw"></i><span>Muat ulang data</span></button>
+      <div class="side-footer">Ruang belajar yang lebih teratur.</div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="mobile-brand">
+          <button class="icon-button mobile-menu" id="menuButton" aria-label="Buka menu"><i data-lucide="menu"></i></button>
+          <span class="brand-name">kumpul<span>.</span></span>
+        </div>
+        <div class="page-heading">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Ruang untuk setiap progres belajarmu.</p>
+        </div>
+        <div class="top-actions">
+          <label class="search-box">
+            <i data-lucide="search"></i>
+            <input id="globalSearch" type="search" placeholder="Cari tugas atau mata kuliah" aria-label="Cari tugas atau mata kuliah">
+            <kbd>/</kbd>
+          </label>
+          <button class="icon-button notification-button" id="notificationButton" aria-label="Lihat pengingat">
+            <i data-lucide="bell"></i><span class="notification-dot"></span>
+          </button>
+          <div class="profile">
+            <div class="avatar" id="avatarInitial">N</div>
+            <div><strong id="studentName">Mahasiswa</strong><small id="studentMeta">Teknik Informatika · Semester 5</small></div>
+            <button class="profile-edit" id="editProfileButton" title="Ubah profil" aria-label="Ubah profil"><i data-lucide="chevron-down"></i></button>
+          </div>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <section class="welcome-panel">
+          <div class="welcome-copy">
+            <div class="eyebrow" id="todayLabel">SELAMAT DATANG</div>
+            <h2>Selangkah lebih dekat, <span id="welcomeName">Nadira</span> <span class="sparkle">✦</span></h2>
+            <p>Ide hebat dimulai dari tugas yang selesai. Yuk, lanjutkan progresmu!</p>
+            <div class="attention-pill"><i data-lucide="clock-3"></i><span id="attentionText">Memeriksa tugas yang perlu perhatian...</span></div>
+          </div>
+          <div class="weekly-card">
+            <div class="progress-ring" id="progressRing"><div><strong id="progressPercent">0%</strong></div></div>
+            <div><strong>Target minggu ini</strong><p id="weeklyText">0 dari 0 tugas selesai</p><span id="weeklyEncouragement">Mulai langkah pertamamu!</span></div>
+          </div>
+          <div class="welcome-decoration">✳</div>
+        </section>
+
+        <section class="stats-grid" aria-label="Ringkasan tugas">
+          <article class="stat-card"><span class="stat-icon rust"><i data-lucide="file-text"></i></span><div><small>Total tugas</small><strong id="statTotal">0</strong><span>Semester ini</span></div></article>
+          <article class="stat-card"><span class="stat-icon gold"><i data-lucide="clock-3"></i></span><div><small>Belum dikumpulkan</small><strong id="statPending">0</strong><span id="pendingHint">Menunggu dikerjakan</span></div></article>
+          <article class="stat-card"><span class="stat-icon green"><i data-lucide="check-circle-2"></i></span><div><small>Sudah dikumpulkan</small><strong id="statSubmitted">0</strong><span>Semua terkirim</span></div></article>
+          <article class="stat-card"><span class="stat-icon sage"><i data-lucide="book-open"></i></span><div><small>Mata kuliah aktif</small><strong id="statCourses">6</strong><span>Semester ini</span></div></article>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="panel task-panel">
+            <div class="panel-heading">
+              <div><h3>Mata kuliah</h3></div>
+              <button class="text-button" data-go="courses"><span id="courseCountLabel">6 mata kuliah aktif</span></button>
+            </div>
+            <div class="course-chips" id="courseChips"></div>
+            <div class="panel-divider"></div>
+            <div class="panel-heading task-list-heading">
+              <div><h3>Tugas saya</h3><p>Atur prioritas, selesaikan satu per satu.</p></div>
+              <select id="dashboardCourseFilter" class="compact-select" aria-label="Filter mata kuliah"><option value="">Semua mata kuliah</option></select>
+            </div>
+            <div class="task-tabs" role="tablist">
+              <button class="task-tab active" data-task-filter="pending">Perlu dikerjakan <b id="tabPending">00</b></button>
+              <button class="task-tab" data-task-filter="submitted">Dikumpulkan <b id="tabSubmitted">00</b></button>
+              <button class="task-tab" data-task-filter="all">Semua tugas <b id="tabAll">00</b></button>
+            </div>
+            <div class="task-list" id="dashboardTaskList"><div class="loading-state">Memuat daftar tugas...</div></div>
+            <div class="list-footer"><span id="taskListSummary">Menampilkan tugas</span><button class="text-button" data-go="tasks">Lihat semua tugas <i data-lucide="arrow-right"></i></button></div>
+          </section>
+
+          <div class="right-column">
+            <section class="panel quick-panel" id="quickUploadPanel">
+              <div class="panel-heading"><div><h3>Pengumpulan cepat</h3><p>Siap? Kirim hasil terbaikmu di sini.</p></div></div>
+              <form id="quickUploadForm">
+                <label class="field-label" for="quickTaskSelect">Pilih tugas</label>
+                <select id="quickTaskSelect" required><option value="">Pilih tugas yang belum dikumpulkan</option></select>
+                <label class="drop-zone" id="dropZone" for="quickFile">
+                  <input type="file" id="quickFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip" hidden>
+                  <span class="upload-icon"><i data-lucide="upload"></i></span>
+                  <strong id="dropTitle">Tarik file ke sini atau pilih file</strong>
+                  <small>PDF, DOCX, ZIP · Maksimal 20 MB</small>
+                  <span class="file-picked" id="filePicked"></span>
+                </label>
+                <button class="primary-button full-button" type="submit" id="uploadSubmit"><i data-lucide="upload"></i> Kumpulkan tugas</button>
+                <p class="form-feedback" id="uploadFeedback" role="status"></p>
+              </form>
+            </section>
+
+            <section class="panel agenda-panel">
+              <div class="panel-heading"><div><h3>Agenda terdekat</h3></div><span class="muted-label">Minggu ini</span></div>
+              <div id="upcomingAgenda" class="agenda-list"><div class="loading-state">Memuat agenda...</div></div>
+              <button class="agenda-link" data-go="calendar">Buka kalender <i data-lucide="arrow-right"></i></button>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-tasks">
+        <div class="section-intro"><div><span class="eyebrow">DAFTAR PEKERJAAN</span><h2>Semua tugas</h2><p>Kelola tenggat dan status pengumpulan tugasmu.</p></div><button class="primary-button" id="addTaskButton"><i data-lucide="plus"></i> Tambah tugas</button></div>
+        <div class="toolbar"><label class="search-box wide-search"><i data-lucide="search"></i><input id="taskSearch" type="search" placeholder="Cari nama tugas..."></label><select id="taskCourseFilter"><option value="">Semua mata kuliah</option></select><select id="taskStatusFilter"><option value="">Semua status</option><option value="pending">Belum dikumpulkan</option><option value="submitted">Sudah dikumpulkan</option></select></div>
+        <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Nama tugas</th><th>Mata kuliah</th><th>Tenggat</th><th>Prioritas</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="allTasksTable"><tr><td colspan="6" class="empty-cell">Memuat tugas...</td></tr></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-courses">
+        <div class="section-intro"><div><span class="eyebrow">RUANG BELAJAR</span><h2>Mata kuliah</h2><p>Daftar mata kuliah semester ini.</p></div><button class="primary-button" id="addCourseButton"><i data-lucide="plus"></i> Tambah mata kuliah</button></div>
+        <div class="course-grid-large" id="courseGrid"></div>
+      </section>
+
+      <section class="view" id="view-calendar">
+        <div class="section-intro"><div><span class="eyebrow">JADWAL AKADEMIK</span><h2>Kalender tugas</h2><p>Pantau tenggat agar tidak ada yang terlewat.</p></div></div>
+        <div class="calendar-layout">
+          <section class="panel calendar-panel">
+            <div class="calendar-top"><button class="icon-button" id="prevMonth" aria-label="Bulan sebelumnya"><i data-lucide="chevron-left"></i></button><h3 id="calendarMonth">Bulan Tahun</h3><button class="icon-button" id="nextMonth" aria-label="Bulan berikutnya"><i data-lucide="chevron-right"></i></button><button class="today-button" id="todayButton">Hari ini</button></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </section>
+          <section class="panel selected-day-panel"><span class="eyebrow">AGENDA TANGGAL</span><h3 id="selectedDateTitle">Pilih tanggal</h3><div id="selectedDateTasks" class="selected-date-tasks"></div></section>
+        </div>
+      </section>
+
+      <section class="view" id="view-history">
+        <div class="section-intro"><div><span class="eyebrow">PROGRES BELAJAR</span><h2>Riwayat pengumpulan</h2><p>Dokumen yang sudah berhasil kamu kirim.</p></div></div>
+        <div class="panel history-panel"><div id="historyList" class="history-list"></div></div>
+      </section>
+
+      <footer class="app-footer">Dibuat dengan perhatian untuk perjalanan belajarmu <span>✦</span></footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div><span class="eyebrow">KELOLA RUANG BELAJAR</span><h2 id="modalTitle">Tambah tugas</h2></div><button class="icon-button" id="closeModal" aria-label="Tutup"><i data-lucide="x"></i></button></div>
+      <form id="taskForm">
+        <label>Nama tugas<input id="newTaskTitle" type="text" maxlength="120" required placeholder="Contoh: Implementasi REST API"></label>
+        <label>Mata kuliah<select id="newTaskCourse" required></select></label>
+        <div class="form-row"><label>Tenggat<input id="newTaskDue" type="date"></label><label>Prioritas<select id="newTaskPriority"><option value="normal">Normal</option><option value="high">Segera</option><option value="low">Santai</option></select></label></div>
+        <label>Deskripsi (opsional)<textarea id="newTaskDescription" rows="3" placeholder="Catatan singkat tentang tugas..."></textarea></label>
+        <p class="form-feedback" id="taskFeedback" role="status"></p>
+        <div class="modal-actions"><button type="button" class="secondary-button" id="cancelModal">Batal</button><button type="submit" class="primary-button" id="saveTaskButton">Simpan tugas</button></div>
+      </form>
+    </section>
+  </div>
+
+  <input type="hidden" id="replaceFileTaskId" value="">
+  <input type="file" id="replaceTaskFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip" hidden>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
